@@ -29,7 +29,7 @@ export default {
   color: var(--vbm-grey-2) !important;
 }
 
-/* .v-overlay__scrim {
+.v-overlay__scrim {
   pointer-events: none !important;
-} */
+}
 </style>
