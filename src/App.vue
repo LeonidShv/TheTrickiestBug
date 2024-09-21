@@ -1,20 +1,7 @@
 <template>
   <div id="nav">
-    <router-link to="/">首页</router-link>
     <span class="line">|</span>
-    <!-- <router-link to="/fixed-size">fixed size</router-link>
-      <span class="line">|</span> -->
-      <router-link to="/dynamic-size">动态高度</router-link>
-      <span class="line">|</span>
-      <!-- <router-link to="/horizontal">horizontal</router-link>
-      <span class="line">|</span> -->
-    <router-link to="/infinite-loading">无限加载</router-link>
-    <span class="line">|</span>
-    <!-- <router-link to="/keep-state">keep state</router-link>
-      <span class="line">|</span>
-      <router-link to="/page-mode">page mode</router-link>
-      <span class="line">|</span> -->
-    <router-link to="/chat-room">聊天室</router-link>
+    <router-link to="/">chat-room</router-link>
   </div>
   <router-view />
 </template>

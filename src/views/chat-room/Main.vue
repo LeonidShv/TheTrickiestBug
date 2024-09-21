@@ -8,6 +8,7 @@ import Editor from './Editor.vue';
 import Toolbar from './Toolbar.vue';
 import getSentences from '../../common/sentences';
 import { getMessages, getSids, LOAD_TYPES, getLoadType } from './util';
+import Loader from '@/components/Loader.vue';
 
 const loadType = getLoadType();
 const param = {
@@ -16,6 +17,7 @@ const param = {
   isFetching: false,
 };
 
+const isLoading = ref(false);
 const finished = ref(loadType !== LOAD_TYPES.PAGES);
 const messages: any = ref([]);
 const overflow = ref(false);
@@ -92,6 +94,7 @@ const setVirtualListToOffset = (offset: number) => {
 };
 
 const onTotop = () => {
+  isLoading.value = true;
   // only page type has paging
   if (getLoadType() !== LOAD_TYPES.PAGES || param.isFetching) {
     return;
@@ -100,79 +103,86 @@ const onTotop = () => {
   param.isFetching = true;
 
   // get next page
-  getMessages(param.pageSize, true).then((msgs: any) => {
-    if (!msgs.length) {
-      finished.value = true;
-      return;
-    }
+  getMessages(param.pageSize, true)
+    .then((msgs: any) => {
+      if (!msgs.length) {
+        finished.value = true;
+        return;
+      }
 
-    const sids = getSids(msgs);
-    messages.value = msgs.concat(messages.value);
-    nextTick(() => {
-      const offset = sids.reduce((previousValue: any, currentSid: any) => {
-        const previousSize =
-          typeof previousValue === 'string'
-            ? vsl.value.getSize(previousValue)
-            : previousValue;
-        return previousSize + vsl.value.getSize(currentSid);
+      const sids = getSids(msgs);
+      messages.value = msgs.concat(messages.value);
+
+      nextTick(() => {
+        const offset = sids.reduce((previousValue: any, currentSid: any) => {
+          const previousSize =
+            typeof previousValue === 'string'
+              ? vsl.value.getSize(previousValue)
+              : previousValue;
+          return previousSize + vsl.value.getSize(currentSid);
+        });
+        setVirtualListToOffset(offset);
+        param.isFetching = false;
       });
-      setVirtualListToOffset(offset);
-
-      param.isFetching = false;
-    });
-  });
+    })
+    .then(() => {
+      isLoading.value = false;
+    })
 };
 
 const jump = () => {
-  vsl.value.scrollToIndex(2);
+  vsl.value.scrollToIndex(0);
 };
 </script>
 
 <template>
   <div class="example">
     <GithubCorner />
-
     <Toolbar />
-
-    <div class="main">
-      <div class="list-container">
-        <VirtualList
-          v-show="!!messages.length"
-          class="stream scroll-touch"
-          :class="{ overflow: overflow }"
-          ref="vsl"
-          :data-key="'sid'"
-          :data-sources="messages"
-          :data-component="Item"
-          :estimate-size="100"
-          :item-class="'stream-item'"
-          :item-class-add="addItemClass"
-          @resized="onItemRendered"
-          @totop="onTotop"
-        >
-          <template #header>
-            <div v-show="overflow" class="header">
-              <div class="spinner" v-show="!finished"></div>
-              <div class="finished" v-show="finished">没有更多了</div>
+    <Loader :loading="isLoading" />
+    <v-container
+    key="meetupMessages"
+    class="pa-0"
+    style="margin-top: 65px"
+  >
+    <v-row
+      :no-gutters="true"
+      class="flex-column"
+    >
+      <div class="main">
+        <div class="list-container">
+          <VirtualList
+            v-show="!!messages.length"
+            class="stream scroll-touch"
+            :class="{ overflow: overflow }"
+            ref="vsl"
+            :data-key="'sid'"
+            :data-sources="messages"
+            :data-component="Item"
+            :estimate-size="100"
+            :item-class="'stream-item'"
+            :item-class-add="addItemClass"
+            @resized="onItemRendered"
+            @totop="onTotop"
+          />
+          <div class="empty" v-show="!messages.length">
+            <div class="wrapper">
+              <div class="icon"></div>
+              <div class="tips">No chats</div>
             </div>
-          </template>
-        </VirtualList>
-        <div class="empty" v-show="!messages.length">
-          <div class="wrapper">
-            <div class="icon"></div>
-            <div class="tips">No chats</div>
           </div>
         </div>
+        <Editor
+          @send="onSendMessage"
+          :send="sendRandomMessage"
+          :received="receivedRandomMessage"
+        />
       </div>
-      <Editor
-        @send="onSendMessage"
-        :send="sendRandomMessage"
-        :received="receivedRandomMessage"
-      />
-    </div>
-    <button @click="jump">跳转至第3条</button>
-    <span class="line" style="margin: 0 1em">|</span>
-    <button @click="setVirtualListToBottom">回到底部</button>
+      <button @click="jump">跳转至第3条</button>
+      <span class="line" style="margin: 0 1em">|</span>
+      <button @click="setVirtualListToBottom">回到底部</button>
+    </v-row>
+    </v-container>
   </div>
 </template>
 
